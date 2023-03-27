@@ -1,0 +1,15 @@
+{
+  "site_package_search_strategy": "pep561",
+  "strict": false,
+  "search_path": [
+    { "site-package": "temporalio" }
+  ],
+
+  "source_directories": [
+    {
+      "import_root": ".",
+      "source": "temporalloop"
+    }
+
+  ]
+}
