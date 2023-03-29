@@ -25,7 +25,7 @@ LOGGING_CONFIG: dict[str, Any] = {
     "disable_existing_loggers": False,
     "formatters": {
         "default": {
-            "()": "temporalloop.logging.DefaultFormatter",
+            "()": "temporalloop.logutils.DefaultFormatter",
             "fmt": "%(levelprefix)s %(message)s",
             "use_colors": None,
         },
@@ -157,9 +157,6 @@ class Config:
             if isinstance(self.log_config, dict):
                 if self.use_colors in (True, False):
                     self.log_config["formatters"]["default"][
-                        "use_colors"
-                    ] = self.use_colors
-                    self.log_config["formatters"]["access"][
                         "use_colors"
                     ] = self.use_colors
                 logging.config.dictConfig(self.log_config)
