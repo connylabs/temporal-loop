@@ -8,9 +8,8 @@ import click
 
 import temporalloop
 from temporalloop.config import LOG_LEVELS, LOGGING_CONFIG, Config, WorkerConfig
+from temporalloop.config_loader import load_config_from_yaml
 from temporalloop.worker import Looper
-
-# from temporalloop.server import Server, ServerState  # noqa: F401  # Used to be defined here.
 
 LEVEL_CHOICES = click.Choice(list(LOG_LEVELS.keys()))
 
@@ -33,9 +32,21 @@ def print_version(ctx: click.Context, param: click.Parameter, value: bool) -> No
     ctx.exit()
 
 
+def run(config: Config) -> None:
+    looper = Looper(config=config)
+    asyncio.run(looper.run())
+
+
 # pylint: disable=no-value-for-parameter
 # pylint: disable=too-many-arguments
 @click.command(context_settings={"auto_envvar_prefix": "TEMPORALRUNNER"})
+@click.option(
+    "--config",
+    type=click.Path(exists=True),
+    default=None,
+    help="Configuration file in YAML format.",
+    show_default=True,
+)
 @click.option(
     "--namespace",
     type=str,
@@ -109,6 +120,7 @@ def print_version(ctx: click.Context, param: click.Parameter, value: bool) -> No
     help="Display the temporalloop version and exit.",
 )
 def main(
+    config: str,
     host: str,
     queue: str,
     namespace: str,
@@ -119,14 +131,26 @@ def main(
     workflow: typing.List[str],
     interceptor: typing.List[str],
 ) -> None:
-    worker_config = WorkerConfig(
-        name="default-worker",
-        workflows=workflow,
-        activities=activity,
-        queue=queue,
-    )
-    run(
-        Config(
+    if config:
+        _config = load_config_from_yaml(config)
+        if host:
+            _config.host = host
+        if namespace:
+            _config.namespace = namespace
+        if log_level:
+            _config.log_level = log_level
+        if log_config:
+            _config.log_config = log_config
+        if use_colors is not None:
+            _config.use_colors = use_colors
+    else:
+        worker_config = WorkerConfig(
+            name="default-worker",
+            workflows=workflow,
+            activities=activity,
+            queue=queue,
+        )
+        _config = Config(
             host=host,
             namespace=namespace,
             workers=[worker_config],
@@ -135,12 +159,7 @@ def main(
             log_config=LOGGING_CONFIG if log_config is None else log_config,
             log_level=log_level,
         )
-    )
-
-
-def run(config: Config) -> None:
-    looper = Looper(config=config)
-    asyncio.run(looper.run())
+    run(_config)
 
 
 if __name__ == "__main__":
