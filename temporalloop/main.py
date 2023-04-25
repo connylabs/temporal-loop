@@ -42,6 +42,7 @@ def run(config: Config) -> None:
 @click.command(context_settings={"auto_envvar_prefix": "TEMPORALRUNNER"})
 @click.option(
     "--config",
+    "-c,",
     type=click.Path(exists=True),
     default=None,
     help="Configuration file in YAML format.",
@@ -49,6 +50,7 @@ def run(config: Config) -> None:
 )
 @click.option(
     "--namespace",
+    "-n",
     type=str,
     default="default",
     help="temporalio namespace",
@@ -57,7 +59,7 @@ def run(config: Config) -> None:
 @click.option(
     "--host",
     type=str,
-    default="127.0.0.1:7233",
+    default=None,
     help="Address of the Temporal Frontend",
     show_default=True,
 )
@@ -65,7 +67,7 @@ def run(config: Config) -> None:
     "--queue",
     "-q",
     type=str,
-    default="default-queue",
+    default=None,
     help="Queue to listen on",
     show_default=True,
 )

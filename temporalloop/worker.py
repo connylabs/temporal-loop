@@ -5,7 +5,7 @@ import logging
 import signal
 import threading
 from types import FrameType
-from typing import TYPE_CHECKING, TypeVar, cast
+from typing import TYPE_CHECKING, TypeVar, cast, Callable, Any
 
 from temporalio import workflow
 from temporalio.client import Client
@@ -61,8 +61,14 @@ class WorkerFactory:
     def __init__(self, config: "Config"):
         self.config = config
 
+    async def execute_preinit(self, fn: list[Callable[..., Any]]) -> None:
+        for x in fn:
+            logger.info("[Execute][Pre-init][%s]", x)
+            x()
+
     async def new_worker(self, worker_config: "WorkerConfig") -> Worker:
         config = worker_config
+        await self.execute_preinit(worker_config.pre_init)
         if config.converter is not None:
             client = await Client.connect(
                 config.host, data_converter=config.converter, namespace=config.namespace

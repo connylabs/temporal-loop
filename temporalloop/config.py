@@ -64,8 +64,9 @@ class WorkerConfig:
         namespace: str = "",
         activities: Sequence[Union[Callable[..., Any], str]] = [],
         workflows: Sequence[Union[Type[Any], str]] = [],
-        interceptors: Sequence[Union[Interceptor, str]] = [],
+        interceptors: Sequence[Union[Type[Interceptor], str]] = [],
         converter: Union[DataConverter, str, None] = None,
+        pre_init: Sequence[Union[Callable[..., Any], str]] = [],
         behavior: str = "merge",
     ) -> None:
         self.name = name
@@ -77,6 +78,8 @@ class WorkerConfig:
         self._activities = activities
         self._interceptors = interceptors
         self._converter = converter
+        self._pre_init = pre_init
+        self.pre_init: list[Callable[..., Any]] = []
         self.converter: Optional[DataConverter] = None
         self.queue = queue
         self.workflows: Sequence[Type[Any]] = []
@@ -96,6 +99,8 @@ class WorkerConfig:
             self._converter = config.converter
         if not self._interceptors:
             self._interceptors = config.interceptors
+        if not self._pre_init:
+            self._pre_init = config.pre_init
 
     def load(self, global_config: Optional["Config"] = None) -> None:
         assert not self.loaded
@@ -107,6 +112,7 @@ class WorkerConfig:
         self.interceptors = self._load_functions(self._interceptors)
         self.converter = cast(DataConverter, self._load_function(self._converter))
         self.factory = self._load_function(self._factory)
+        self.pre_init = self._load_function(self._pre_init)
         self.loaded = True
 
     def _load_functions(self, functions: Sequence[Any]) -> Sequence[Any]:
@@ -135,6 +141,8 @@ class Config:
         use_colors: Optional[bool] = None,
         workers: Sequence[Union[WorkerConfig, dict[str, Any]]] = [],
         limit_concurrency: Optional[int] = None,
+        pre_init: list[str] = [],
+        config_logging: bool = True,
     ):
         self.host = host
         self.namespace: str = namespace
@@ -143,14 +151,15 @@ class Config:
         self.log_level = log_level
         self.use_colors = use_colors
         self.limit_concurrency = limit_concurrency
-        self._interceptors = interceptors
+        self.interceptors = interceptors
         self._workers = workers
+        self.pre_init = pre_init
         self.workers: list[WorkerConfig] = []
         self.converter = converter
-        self.interceptors: Sequence[Interceptor] = []
         self.loaded = False
 
-        self.configure_logging()
+        if config_logging:
+            self.configure_logging()
 
     def configure_logging(self) -> None:
         if self.log_config is not None:
@@ -177,7 +186,7 @@ class Config:
 
         if self.log_level is not None:
             if isinstance(self.log_level, str):
-                log_level = LOG_LEVELS[self.log_level]
+                log_level = LOG_LEVELS[self.log_level.lower()]
             else:
                 log_level = self.log_level
             logging.getLogger("temporalloop.error").setLevel(log_level)
