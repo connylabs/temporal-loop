@@ -1,14 +1,14 @@
 from typing import Any, Dict, Optional, Union
-from pydantic import BaseModel, Field
+from pydantic import BaseSettings, Field
 import yaml
 
 from temporalloop.config import LOGGING_CONFIG, Config
 
 
-class BaseConfig(BaseModel):
+class BaseConfig(BaseSettings):
     class Config:
-        env_prefix = "FUNNELBOAT_"
         smart_union = True
+        case_sensitive = False
 
 
 class LoggingConfigSchema(BaseConfig):
