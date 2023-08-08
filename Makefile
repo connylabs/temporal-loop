@@ -41,7 +41,7 @@ clean-test:
 	rm -fr htmlcov/
 
 test:
-	OPTICR_CONF_FILE=tests/data/test_config.yaml poetry run py.test --cov=$(package) --cov-report=html --cov-report=term-missing  --verbose tests
+	poetry run py.test --cov=$(package) --cov-report=html --cov-report=term-missing  --verbose tests
 
 
 coverage:

@@ -1,14 +1,13 @@
 from typing import Any, Dict, Optional, Union
-from pydantic import BaseSettings, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import Field
 import yaml
 
 from temporalloop.config import LOGGING_CONFIG, Config
 
 
 class BaseConfig(BaseSettings):
-    class Config:
-        smart_union = True
-        case_sensitive = False
+    model_config = SettingsConfigDict(case_sensitive=False)
 
 
 class LoggingConfigSchema(BaseConfig):
