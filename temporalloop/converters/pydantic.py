@@ -2,8 +2,7 @@
 
 import json
 from typing import Any, Optional
-
-from pydantic.json import pydantic_encoder
+from pydantic import BaseModel
 from temporalio.api.common.v1 import Payload
 from temporalio.converter import (
     CompositePayloadConverter,
@@ -28,12 +27,16 @@ class PydanticJSONPayloadConverter(JSONPlainPayloadConverter):
         unable to convert.
         """
         # We let JSON conversion errors be thrown to caller
-        return Payload(
-            metadata={"encoding": self.encoding.encode()},
-            data=json.dumps(
-                value, separators=(",", ":"), sort_keys=True, default=pydantic_encoder
-            ).encode(),
-        )
+        if issubclass(value.__class__, BaseModel):
+            return Payload(
+                metadata={"encoding": self.encoding.encode()},
+                data=value.model_dump_json().encode(),
+            )
+        else:
+            return Payload(
+                metadata={"encoding": self.encoding.encode()},
+                data=json.dumps(value).encode(),
+            )
 
 
 # pyre-ignore[13]:
