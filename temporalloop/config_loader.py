@@ -1,7 +1,8 @@
 from typing import Any, Dict, Optional, Union
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field
+
 import yaml
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from temporalloop.config import LOGGING_CONFIG, Config
 
@@ -75,7 +76,10 @@ def config_from_dict(config_dict: Dict[str, Any]) -> Config:
         log_level=config.logging.level,
         use_colors=config.logging.use_colors,
         log_config=config.logging.log_config,
-        workers=[x.__dict__ for x in config.temporalio.workers],
+        workers=[
+            x.__dict__
+            for x in config.temporalio.workers  # pylint: disable=not-an-iterable
+        ],
         interceptors=config.temporalio.interceptors,
         pre_init=config.temporalio.pre_init,
     )

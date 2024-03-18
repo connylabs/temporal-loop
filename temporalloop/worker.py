@@ -5,7 +5,7 @@ import logging
 import signal
 import threading
 from types import FrameType
-from typing import TYPE_CHECKING, TypeVar, cast, Callable, Any
+from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
 from temporalio import workflow
 from temporalio.client import Client
