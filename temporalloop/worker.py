@@ -4,6 +4,7 @@ import dataclasses
 import logging
 import signal
 import threading
+from concurrent.futures import ThreadPoolExecutor
 from types import FrameType
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
 
@@ -90,7 +91,13 @@ class WorkerFactory:
             task_queue=config.queue,
             workflows=config.workflows,
             activities=config.activities,
+            disable_eager_activity_execution=False,
+            max_concurrent_workflow_tasks=config.max_concurrent_workflow_tasks,
+            max_concurrent_activities=config.max_concurrent_activities,
             interceptors=[x() for x in config.interceptors],
+            activity_executor=ThreadPoolExecutor(
+                max(config.max_concurrent_activities + 1, 10)
+            ),
             workflow_runner=new_sandbox_runner(),
         )
 

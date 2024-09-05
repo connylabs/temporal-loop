@@ -28,6 +28,10 @@ class WorkerConfigSchema(BaseConfig):
     converter: Optional[str] = Field(default=None)
     factory: Optional[str] = Field(default=None)
     pre_init: Optional[list[str]] = Field(default=None)
+    max_concurrent_activities: int = Field(default=100)
+    max_concurrent_workflow_tasks: int = Field(default=100)
+    debug_mode: bool = Field(default=False)
+    disable_eager_activity_execution: bool = Field(default=True) # pylint: disable=invalid-name
 
 
 class TemporalConfigSchema(BaseConfig):

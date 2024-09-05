@@ -52,7 +52,27 @@ LOGGING_CONFIG: dict[str, Any] = {
 logger: logging.Logger = logging.getLogger("temporalloop.error")
 
 
-# pylint: disable=too-many-arguments,too-many-instance-attributes,dangerous-default-value
+def merge_loggers(logging_config: dict[str, Any]) -> dict[str, Any]:
+    if "loggers" not in logging_config:
+        logging_config["loggers"] = LOGGING_CONFIG["loggers"]
+    else:
+        if "temporalio" not in logging_config["loggers"]:
+            logging_config["loggers"]["temporalio"] = LOGGING_CONFIG["loggers"][
+                "temporalio"
+            ]
+        if "temporalloop" not in logging_config["loggers"]:
+            logging_config["loggers"]["temporalloop"] = LOGGING_CONFIG["loggers"][
+                "temporalloop"
+            ]
+        if "temporalloop.error" not in logging_config["loggers"]:
+            logging_config["loggers"]["temporalloop.error"] = LOGGING_CONFIG["loggers"][
+                "temporalloop.error"
+            ]
+
+    return logging_config
+
+
+# pylint: disable=too-many-arguments,too-many-instance-attributes,dangerous-default-value,invalid-name,too-many-locals
 class WorkerConfig:
     def __init__(
         self,
@@ -68,6 +88,10 @@ class WorkerConfig:
         converter: Union[DataConverter, str, None] = None,
         pre_init: Sequence[Union[Callable[..., Any], str]] = [],
         behavior: str = "merge",
+        max_concurrent_workflow_tasks: int = 100,
+        max_concurrent_activities: int = 100,
+        debug_mode: bool = False,
+        disable_eager_activity_execution: bool = True
     ) -> None:
         self.name = name
         self.host: str = host
@@ -87,6 +111,10 @@ class WorkerConfig:
         self.activities: Sequence[Callable[..., Any]] = []
         self.loaded = False
         self.behavior = behavior
+        self.max_concurrent_workflow_tasks = max_concurrent_workflow_tasks
+        self.max_concurrent_activities = max_concurrent_activities
+        self.debug_mode = debug_mode
+        self.disable_eager_activity_execution = disable_eager_activity_execution
 
     def _merge(self, config: "Config") -> None:
         if not self.host:
