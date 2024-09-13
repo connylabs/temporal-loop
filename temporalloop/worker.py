@@ -7,7 +7,7 @@ import threading
 from concurrent.futures import ThreadPoolExecutor
 from types import FrameType
 from typing import TYPE_CHECKING, Any, Callable, TypeVar, cast
-
+from temporalio.runtime import Runtime, TelemetryConfig, PrometheusConfig
 from temporalio import workflow
 from temporalio.client import Client
 from temporalio.worker import Worker
@@ -70,12 +70,15 @@ class WorkerFactory:
     async def new_worker(self, worker_config: "WorkerConfig") -> Worker:
         config = worker_config
         await self.execute_preinit(worker_config.pre_init)
+        kwargs: dict[str, Any] = {"namespace": config.namespace}
+        if config.metric_bind_address:
+            new_runtime = Runtime(telemetry=TelemetryConfig(metrics=PrometheusConfig(bind_address=config.metric_bind_address)))
+            kwargs["runtime"] = new_runtime
+
         if config.converter is not None:
-            client = await Client.connect(
-                config.host, data_converter=config.converter, namespace=config.namespace
-            )
-        else:
-            client = await Client.connect(config.host, namespace=config.namespace)
+            kwargs["data_converter"] = config.converter
+
+        client = await Client.connect(config.host, **kwargs)
 
         logger.info(
             "[Start worker][%s][queue:%s][workflows:%s][activities:%s]",

@@ -88,8 +88,9 @@ class WorkerConfig:
         converter: Union[DataConverter, str, None] = None,
         pre_init: Sequence[Union[Callable[..., Any], str]] = [],
         behavior: str = "merge",
-        max_concurrent_workflow_tasks: int = 100,
-        max_concurrent_activities: int = 100,
+        max_concurrent_workflow_tasks: int = 0,
+        max_concurrent_activities: int = 0,
+        metric_bind_address: str  = "",
         debug_mode: bool = False,
         disable_eager_activity_execution: bool = True
     ) -> None:
@@ -103,6 +104,7 @@ class WorkerConfig:
         self._interceptors = interceptors
         self._converter = converter
         self._pre_init = pre_init
+
         self.pre_init: list[Callable[..., Any]] = []
         self.converter: Optional[DataConverter] = None
         self.queue = queue
@@ -115,6 +117,7 @@ class WorkerConfig:
         self.max_concurrent_activities = max_concurrent_activities
         self.debug_mode = debug_mode
         self.disable_eager_activity_execution = disable_eager_activity_execution
+        self.metric_bind_address = metric_bind_address
 
     def _merge(self, config: "Config") -> None:
         if not self.host:
@@ -129,6 +132,13 @@ class WorkerConfig:
             self._interceptors = config.interceptors
         if not self._pre_init:
             self._pre_init = config.pre_init
+        if not self.max_concurrent_workflow_tasks:
+            self.max_concurrent_workflow_tasks = config.max_concurrent_workflow_tasks
+        if not self.max_concurrent_activities:
+            self.max_concurrent_activities = config.max_concurrent_activities
+        if not self.metric_bind_address:
+            self.metric_bind_address = config.metric_bind_address
+
 
     def load(self, global_config: Optional["Config"] = None) -> None:
         assert not self.loaded
@@ -168,6 +178,9 @@ class Config:
         converter: Union[DataConverter, str, None] = None,
         use_colors: Optional[bool] = None,
         workers: Sequence[Union[WorkerConfig, dict[str, Any]]] = [],
+        max_concurrent_activities: int = 100,
+        max_concurrent_workflow_tasks: int = 100,
+        metric_bind_address: str = "0.0.0.0:9000",
         limit_concurrency: Optional[int] = None,
         pre_init: list[str] = [],
         config_logging: bool = True,
@@ -184,8 +197,10 @@ class Config:
         self.pre_init = pre_init
         self.workers: list[WorkerConfig] = []
         self.converter = converter
+        self.max_concurrent_activities = max_concurrent_activities
+        self.max_concurrent_workflow_tasks = max_concurrent_workflow_tasks
         self.loaded = False
-
+        self.metric_bind_address = metric_bind_address
         if config_logging:
             self.configure_logging()
 

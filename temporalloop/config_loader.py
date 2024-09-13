@@ -32,7 +32,7 @@ class WorkerConfigSchema(BaseConfig):
     max_concurrent_workflow_tasks: int = Field(default=100)
     debug_mode: bool = Field(default=False)
     disable_eager_activity_execution: bool = Field(default=True) # pylint: disable=invalid-name
-
+    metric_bind_address: str = Field(default="0.0.0.0:9000")
 
 class TemporalConfigSchema(BaseConfig):
     host: str = Field(default="localhost:7233")
@@ -42,6 +42,10 @@ class TemporalConfigSchema(BaseConfig):
     converter: Optional[str] = Field(default=None)
     default_factory: str = Field(default="temporalloop.worker:WorkerFactory")
     pre_init: list[str] = Field(default_factory=list)
+    max_concurrent_activities: int = Field(default=100)
+    max_concurrent_workflow_tasks: int = Field(default=100)
+    disable_eager_activity_execution: bool = Field(default=True) # pylint: disable=invalid-name
+    metric_bind_address: str = Field(default="0.0.0.0:9000")
 
 
 class ConfigSchema(BaseConfig):
