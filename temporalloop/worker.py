@@ -61,6 +61,23 @@ def new_sandbox_runner() -> SandboxedWorkflowRunner:
 class WorkerFactory:
     def __init__(self, config: "Config"):
         self.config = config
+        self.new_runtime = None
+        self._client = None
+
+    async def client(self):
+        if not self._client:
+            # if self.config.metric_bind_address:
+            #     self.new_runtime = Runtime(telemetry=TelemetryConfig(metrics=PrometheusConfig(bind_address=self.config.metric_bind_address)))
+
+            kwargs: dict[str, Any] = {"namespace": self.config.namespace}
+            if self.new_runtime is not None:
+                kwargs["runtime"] = self.new_runtime
+
+            if self.config.converter is not None:
+                kwargs["data_converter"] = self.config.converter
+
+            self._client = await Client.connect(self.config.host, **kwargs)
+        return self._client
 
     async def execute_preinit(self, fn: list[Callable[..., Any]]) -> None:
         for x in fn:
@@ -70,24 +87,17 @@ class WorkerFactory:
     async def new_worker(self, worker_config: "WorkerConfig") -> Worker:
         config = worker_config
         await self.execute_preinit(worker_config.pre_init)
-        kwargs: dict[str, Any] = {"namespace": config.namespace}
-        if config.metric_bind_address:
-            new_runtime = Runtime(telemetry=TelemetryConfig(metrics=PrometheusConfig(bind_address=config.metric_bind_address)))
-            kwargs["runtime"] = new_runtime
-
-        if config.converter is not None:
-            kwargs["data_converter"] = config.converter
-
-        client = await Client.connect(config.host, **kwargs)
-
         logger.info(
-            "[Start worker][%s][queue:%s][workflows:%s][activities:%s]",
+            "[Start worker][%s][queue:%s][workflows:%s][activities:%s][max_concurrent_workflow_tasks:%s][max_concurrent_activities:%s][metric_bind_address:%s]",
             config.name,
             config.queue,
             config.workflows,
             config.activities,
+            config.max_concurrent_workflow_tasks,
+            config.max_concurrent_activities,
+            config.metric_bind_address
         )
-
+        client = await self.client()
         # Run a worker for the workflow
         return Worker(
             client,
